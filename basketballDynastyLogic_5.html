@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DYNASTY // LOGIC ENGINE v0.9</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #09090b;
+            --surface: #121214;
+            --surface-hover: #1c1c1f;
+            --border: #27272a;
+            --text-main: #e4e4e7;
+            --text-muted: #71717a;
+            --primary: #d4d4d8;
+            --accent: #f59e0b;
+            --success: #10b981;
+            --danger: #ef4444;
+            --alien: #d946ef;
+            --space-sm: 8px;
+            --space-md: 16px;
+            --space-lg: 24px;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text-main);
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            min-height: 100vh;
+            background-image: linear-gradient(var(--border) 1px, transparent 1px), linear-gradient(90deg, var(--border) 1px, transparent 1px);
+            background-size: 40px 40px;
+        }
+
+        .mono {
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .uppercase {
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .tiny {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .app-header {
+            background: var(--bg);
+            border-bottom: 1px solid var(--border);
+            padding: var(--space-md) var(--space-lg);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .brand {
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 800;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--success);
+            border-radius: 50%;
+        }
+
+        .workspace {
+            max-width: 1200px;
+            margin: 40px auto;
+            display: grid;
+            grid-template-columns: 320px 1fr;
+            gap: 24px;
+            padding: 0 24px;
+        }
+
+        @media (max-width: 900px) {
+            .workspace {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .panel {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .panel-header {
+            background: #000;
+            border-bottom: 1px solid var(--border);
+            padding: var(--space-sm) var(--space-md);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .panel-body {
+            padding: var(--space-lg);
+        }
+
+        .control-group {
+            margin-bottom: 24px;
+        }
+
+        select {
+            width: 100%;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            padding: 10px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+            border-radius: 0;
+            cursor: pointer;
+        }
+
+            select:focus {
+                outline: 1px solid var(--accent);
+                border-color: var(--accent);
+            }
+
+        .metric-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px dashed var(--border);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+        }
+
+            .metric-row:last-child {
+                border-bottom: none;
+            }
+
+        .recruit-grid {
+            display: grid;
+            grid-template-columns: 1fr 200px;
+            gap: 24px;
+            margin-bottom: 32px;
+        }
+
+        .player-identity h1 {
+            margin: 0;
+            font-size: 2rem;
+            font-weight: 700;
+            line-height: 1;
+            letter-spacing: -1px;
+        }
+
+        .meta-tags {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .tag {
+            background: var(--border);
+            padding: 4px 8px;
+            font-size: 0.75rem;
+            font-family: 'JetBrains Mono', monospace;
+            text-transform: uppercase;
+            color: var(--text-main);
+        }
+
+            .tag.alien {
+                color: var(--alien);
+                border: 1px solid var(--alien);
+                background: rgba(217, 70, 239, 0.1);
+            }
+
+            .tag.trait {
+                color: var(--danger);
+                border: 1px solid var(--danger);
+                background: rgba(239, 68, 68, 0.1);
+            }
+
+        .fit-box {
+            border: 1px solid var(--border);
+            background: var(--bg);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+        }
+
+        .fit-score {
+            font-size: 3rem;
+            font-weight: 800;
+            font-family: 'JetBrains Mono', monospace;
+            line-height: 1;
+        }
+
+        .stat-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+            .stat-table td {
+                padding: 6px 0;
+                font-size: 0.85rem;
+            }
+
+        .col-label {
+            width: 100px;
+            color: var(--text-muted);
+        }
+
+        .col-val {
+            width: 80px;
+            text-align: right;
+            font-weight: 700;
+        }
+
+        .bar-container {
+            height: 12px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            width: 100%;
+            position: relative;
+        }
+
+        .bar-fill {
+            height: 100%;
+            background: var(--text-main);
+            transition: width 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+            .bar-fill.unscouted {
+                width: 100% !important;
+                background: repeating-linear-gradient( 45deg, var(--border), var(--border) 10px, var(--surface) 10px, var(--surface) 20px );
+                border-right: none;
+                opacity: 0.5;
+            }
+
+        .btn {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+            padding: 12px 20px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.2s;
+            width: 100%;
+        }
+
+            .btn:hover {
+                background: var(--surface-hover);
+                color: var(--text-main);
+                border-color: var(--text-muted);
+            }
+
+        .btn-primary {
+            background: var(--text-main);
+            color: var(--bg);
+            font-weight: 700;
+            border: 1px solid var(--text-main);
+        }
+
+            .btn-primary:hover {
+                background: #fff;
+                transform: translateY(-1px);
+            }
+
+            .btn-primary.disabled {
+                background: var(--border);
+                color: var(--text-muted);
+                border-color: var(--border);
+                cursor: not-allowed;
+                transform: none;
+            }
+
+        .console {
+            background: #000;
+            border-top: 1px solid var(--border);
+            padding: 16px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            min-height: 80px;
+        }
+
+        .console-line {
+            margin-bottom: 4px;
+            display: block;
+        }
+
+            .console-line::before {
+                content: "> ";
+                color: var(--text-muted);
+            }
+
+        .action-bar {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: -1px;
+            margin-top: 24px;
+        }
+
+            .action-bar .btn {
+                border-radius: 0;
+            }
+    </style>
+</head>
+<body>
+
+    <header class="app-header">
+        <div class="brand">
+            <div class="status-dot"></div>
+            DYNASTY_LOGIC // <span style="color: var(--text-muted); font-weight: 400;">v0.9.4</span>
+        </div>
+        <div class="mono tiny">CONNECTED</div>
+    </header>
+
+    <div class="workspace">
+
+        <aside class="panel">
+            <div class="panel-header">
+                <span>CONFIG</span>
+                <span>// 01</span>
+            </div>
+            <div class="panel-body">
+                <div class="control-group">
+                    <label class="mono tiny uppercase" style="display:block; margin-bottom:8px;">Active Scheme</label>
+                    <select id="schemeSelect" onchange="updateFit()">
+                        <option value="analytics">1.5-Out Analytics</option>
+                        <option value="motion">Variable Motion</option>
+                        <option value="bully">Bully Ball</option>
+                        <option value="pace">Pace & Space</option>
+                        <option value="spread">Spread Attack</option>
+                    </select>
+                </div>
+
+                <div class="control-group">
+                    <label class="mono tiny uppercase" style="display:block; margin-bottom:12px; border-bottom: 1px solid var(--border); padding-bottom: 4px;">Scheme Requirements</label>
+
+                    <div class="metric-row">
+                        <span style="color: var(--text-muted);">Primary</span>
+                        <span style="color: var(--success);" id="ui-catalyst">3-Point</span>
+                    </div>
+                    <div class="metric-row">
+                        <span style="color: var(--text-muted);">Secondary</span>
+                        <span style="color: var(--text-main);" id="ui-enabler">Spacing IQ</span>
+                    </div>
+                    <div class="metric-row">
+                        <span style="color: var(--text-muted);">Conflict</span>
+                        <span style="color: var(--danger);" id="ui-inhibitor">Rim Runner</span>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <main class="panel">
+            <div class="panel-header">
+                <span>SCOUTING REPORT</span>
+                <span id="p-batch-id">BATCH #992</span>
+            </div>
+
+            <div class="panel-body">
+                <div class="recruit-grid">
+                    <div class="player-identity">
+                        <h1 id="p-name" class="mono">--</h1>
+                        <div class="meta-tags">
+                            <span class="tag" id="p-pos">POS</span>
+                            <span class="tag" id="p-arch">ARCH</span>
+                            <span class="tag" id="p-hw">-- / --</span>
+                            <span class="tag trait" id="p-trait" style="display: none;">TRAIT</span>
+                            <span class="tag alien" id="p-alien" style="display: none;">ALIEN</span>
+                        </div>
+                    </div>
+
+                    <div class="fit-box">
+                        <span class="mono tiny uppercase" style="color: var(--text-muted);">Fit Grade</span>
+                        <span class="fit-score" id="fit-grade">--</span>
+                    </div>
+                </div>
+
+                <table class="stat-table">
+                    <tr>
+                        <td class="col-label">3-POINT</td>
+                        <td><div class="bar-container"><div class="bar-fill" id="fill-3pt"></div></div></td>
+                        <td class="col-val" id="val-3pt">--</td>
+                    </tr>
+                    <tr>
+                        <td class="col-label">SPEED</td>
+                        <td><div class="bar-container"><div class="bar-fill" id="fill-spd"></div></div></td>
+                        <td class="col-val" id="val-spd">--</td>
+                    </tr>
+                    <tr>
+                        <td class="col-label">STRENGTH</td>
+                        <td><div class="bar-container"><div class="bar-fill" id="fill-str"></div></div></td>
+                        <td class="col-val" id="val-str">--</td>
+                    </tr>
+                    <tr>
+                        <td class="col-label">HANDLE</td>
+                        <td><div class="bar-container"><div class="bar-fill" id="fill-hnd"></div></div></td>
+                        <td class="col-val" id="val-hnd">--</td>
+                    </tr>
+                    <tr>
+                        <td class="col-label">PASSING</td>
+                        <td><div class="bar-container"><div class="bar-fill" id="fill-pas"></div></div></td>
+                        <td class="col-val" id="val-pas">--</td>
+                    </tr>
+                    <tr>
+                        <td class="col-label">REBOUND</td>
+                        <td><div class="bar-container"><div class="bar-fill" id="fill-reb"></div></div></td>
+                        <td class="col-val" id="val-reb">--</td>
+                    </tr>
+                </table>
+
+                <button class="btn btn-primary" id="btn-scout" onclick="revealStats()" style="margin-top: 24px;">
+                    Decrypt Metrics [10 PTS]
+                </button>
+
+                <div class="action-bar">
+                    <button class="btn" onclick="generateRecruit()">Next</button>
+                    <button class="btn" onclick="generateRecruit('Post Anchor')">Big</button>
+                    <button class="btn" onclick="generateRecruit('Rim Runner')">Rim</button>
+                    <button class="btn" onclick="generateRecruit('Alien')" style="color: var(--alien);">Alien</button>
+                </div>
+            </div>
+
+            <div class="console" id="logic-console">
+                <span class="console-line">System initialized.</span>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const schemes = {
+            analytics: { name: "1.5-Out Analytics", c: "3pt", cLabel: "3-Point", e: "pas", eLabel: "Spacing IQ", iType: "arch", iVal: "Rim Runner", iLabel: "Rim Runner Arch" },
+            motion: { name: "Variable Motion", c: "pas", cLabel: "Passing", e: "spd", eLabel: "Off-Ball Speed", iType: "trait", iVal: "Ball Stopper", iLabel: "'Ball Stopper' Trait" },
+            bully: { name: "Bully Ball", c: "str", cLabel: "Strength", e: "reb", eLabel: "Post Control", iType: "stat_low", iVal: "weight", iThreshold: 215, iLabel: "Weight < 215lbs" },
+            pace: { name: "Pace & Space", c: "spd", cLabel: "Speed", e: "3pt", eLabel: "Trailing 3s", iType: "arch", iVal: "Post Anchor", iLabel: "Post Anchor Arch" },
+            spread: { name: "Spread Attack", c: "hnd", cLabel: "Ball Handle", e: "spd", eLabel: "First Step", iType: "trait", iVal: "Passive", iLabel: "'Passive' Trait" }
+        };
+
+        const archetypes = {
+            "Playmaker": { pos: "PG", hMin: 73, hMax: 77, wMin: 175, wMax: 205, caps: { '3pt': 80, 'spd': 95, 'str': 50, 'hnd': 99, 'pas': 99, 'reb': 40 } },
+            "Sharpshooter": { pos: "SG", hMin: 75, hMax: 79, wMin: 185, wMax: 215, caps: { '3pt': 99, 'spd': 85, 'str': 60, 'hnd': 80, 'pas': 75, 'reb': 50 } },
+            "Slasher": { pos: "SF", hMin: 77, hMax: 81, wMin: 200, wMax: 235, caps: { '3pt': 70, 'spd': 92, 'str': 75, 'hnd': 85, 'pas': 70, 'reb': 65 } },
+            "Post Anchor": { pos: "PF", hMin: 80, hMax: 83, wMin: 240, wMax: 270, caps: { '3pt': 55, 'spd': 50, 'str': 99, 'hnd': 50, 'pas': 65, 'reb': 90 } },
+            "Rim Runner": { pos: "C", hMin: 82, hMax: 86, wMin: 230, wMax: 260, caps: { '3pt': 40, 'spd': 75, 'str': 85, 'hnd': 45, 'pas': 40, 'reb': 85 } }
+        };
+
+        const traits = ["None", "None", "None", "Ball Stopper", "Passive", "Alpha", "Homesick"];
+
+        let currentPlayer = {};
+        let isScouted = false;
+
+        function generateRecruit(forceType = null) {
+            isScouted = false;
+            const btn = document.getElementById('btn-scout');
+            btn.classList.remove('disabled');
+            btn.innerText = "DECRYPT METRICS [10 PTS]";
+
+            let archKey = Object.keys(archetypes)[Math.floor(Math.random() * 5)];
+            if (forceType && forceType !== 'Alien') archKey = forceType;
+
+            let archData = archetypes[archKey];
+            let rarity = "Common";
+
+            const roll = Math.random();
+            if (roll > 0.98 || forceType === 'Alien') rarity = "Alien";
+            else if (roll > 0.90) rarity = "Generational";
+
+            let h = rand(archData.hMin, archData.hMax);
+            let w = rand(archData.wMin, archData.wMax);
+            let trait = traits[Math.floor(Math.random() * traits.length)];
+
+            let stats = {
+                '3pt': rand(40, archData.caps['3pt']),
+                'spd': rand(40, archData.caps['spd']),
+                'str': rand(40, archData.caps['str']),
+                'hnd': rand(40, archData.caps['hnd']),
+                'pas': rand(40, archData.caps['pas']),
+                'reb': rand(40, archData.caps['reb'])
+            };
+
+            if (rarity === "Alien") {
+                h = rand(88, 92);
+                w = 230;
+                stats['hnd'] = rand(85, 99);
+                stats['3pt'] = rand(80, 99);
+                archKey = "Unicorn";
+            }
+
+            const idStr = Math.floor(Math.random() * 9000) + 1000;
+            const suffix = String.fromCharCode(65 + Math.floor(Math.random() * 26));
+
+            currentPlayer = {
+                name: `ASSET-${idStr}-${suffix}`,
+                pos: archData.pos,
+                arch: archKey,
+                h: h,
+                w: w,
+                wing: h + rand(2, 6),
+                trait: trait,
+                stats: stats,
+                rarity: rarity
+            };
+
+            renderPlayer();
+            updateFit();
+        }
+
+        function revealStats() {
+            if (isScouted) return;
+            isScouted = true;
+            const btn = document.getElementById('btn-scout');
+            btn.classList.add('disabled');
+            btn.innerText = "METRICS UNLOCKED";
+            renderPlayer();
+            updateFit();
+        }
+
+        function renderPlayer() {
+            const p = currentPlayer;
+
+            document.getElementById('p-name').innerText = p.name;
+            document.getElementById('p-pos').innerText = p.pos;
+            document.getElementById('p-arch').innerText = p.arch;
+            document.getElementById('p-hw').innerText = `${inchToFt(p.h)} / ${p.w}`;
+
+            const tBadge = document.getElementById('p-trait');
+            const aBadge = document.getElementById('p-alien');
+
+            tBadge.style.display = "none";
+            aBadge.style.display = "none";
+
+            if (isScouted) {
+                if (p.trait !== "None") {
+                    tBadge.style.display = "inline-flex";
+                    tBadge.innerText = p.trait;
+                }
+                if (p.rarity === "Alien") {
+                    aBadge.style.display = "inline-flex";
+                }
+            }
+
+            drawBar('3pt', p.stats['3pt']);
+            drawBar('spd', p.stats['spd']);
+            drawBar('str', p.stats['str']);
+            drawBar('hnd', p.stats['hnd']);
+            drawBar('pas', p.stats['pas']);
+            drawBar('reb', p.stats['reb']);
+        }
+
+        function drawBar(key, val) {
+            const fill = document.getElementById(`fill-${key}`);
+            const text = document.getElementById(`val-${key}`);
+
+            if (!isScouted) {
+                fill.className = "bar-fill unscouted";
+                text.innerText = "???";
+                text.style.color = "var(--text-muted)";
+                fill.style.width = "100%";
+                fill.style.backgroundColor = "transparent";
+            } else {
+                fill.className = "bar-fill";
+                fill.style.width = `${val}%`;
+                text.innerText = val;
+                text.style.color = "var(--text-main)";
+
+                if (val >= 90) fill.style.background = "var(--alien)";
+                else if (val >= 75) fill.style.background = "var(--success)";
+                else if (val <= 50) fill.style.background = "var(--danger)";
+                else fill.style.background = "var(--text-main)";
+            }
+        }
+
+        function updateFit() {
+            const sKey = document.getElementById('schemeSelect').value;
+            const scheme = schemes[sKey];
+            const p = currentPlayer;
+
+            document.getElementById('ui-catalyst').innerText = scheme.cLabel;
+            document.getElementById('ui-enabler').innerText = scheme.eLabel;
+            document.getElementById('ui-inhibitor').innerText = scheme.iLabel;
+
+            const badge = document.getElementById('fit-grade');
+            const console = document.getElementById('logic-console');
+
+            if (!isScouted) {
+                badge.innerText = "--";
+                badge.style.color = "var(--text-muted)";
+                console.innerHTML = `<span class='console-line'>Awaiting Decryption...</span>`;
+                return;
+            }
+
+            let grade = "C";
+            let color = "var(--text-muted)";
+            let logs = [];
+
+            let failed = false;
+            if (scheme.iType === "arch" && p.arch === scheme.iVal) {
+                failed = true;
+                logs.push(`Wrong archetype. Get him out of here.`);
+            } else if (scheme.iType === "trait" && p.trait === scheme.iVal) {
+                failed = true;
+                logs.push(`Attitude problem. He's a '${p.trait}'.`);
+            } else if (scheme.iType === "stat_low" && p[scheme.iVal] < scheme.iThreshold) {
+                failed = true;
+                logs.push(`Too small. He'll get bullied.`);
+            }
+
+            if (failed) {
+                grade = "D";
+                color = "var(--danger)";
+                logs.push(`Hard Pass. Doesn't fit the system.`);
+            } else {
+                const catVal = p.stats[scheme.c];
+                if (catVal >= 85) {
+                    grade = "A";
+                    color = "var(--success)";
+                    logs.push(`Perfect fit. This kid is elite.`);
+                } else if (catVal >= 75) {
+                    grade = "B";
+                    color = "var(--text-main)";
+                    logs.push(`Solid rotation piece. He can work.`);
+                } else if (catVal <= 60) {
+                    grade = "F";
+                    color = "var(--danger)";
+                    logs.push(`Can't execute the primary action. Liability.`);
+                } else {
+                    logs.push(`Serviceable. Nothing special.`);
+                }
+            }
+
+            badge.innerText = grade;
+            badge.style.color = color;
+
+            console.innerHTML = logs.map(l => `<span class='console-line'>${l}</span>`).join("");
+        }
+
+        function rand(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+        function inchToFt(i) { return `${Math.floor(i / 12)}'${i % 12}"`; }
+
+        generateRecruit();
+    </script>
+</body>
+</html>
